@@ -1,0 +1,349 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour",
+              "minute": 15
+            }
+          ]
+        },
+        "filters": {
+          "readStatus": "unread",
+          "sender": "catacfunes@gmail.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5438348f-d131-4288-9cce-b46b0410d6ba",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JKc2eKpFZ06rkAGH",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8de6ed05-65a0-4cbc-85c3-3d95e306198e",
+              "name": "text",
+              "value": "={{$json.snippet}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "9f208168-5d87-4cb8-8d0a-5f68ce5d0b9c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Sos un asistente de automatización especializado en fashion retail y gestión comercial.\n\nAnalizá el siguiente email y clasificá su intención principal.\n\nContenido del email:\n{{$json.text}}\n\nRespondé únicamente en formato JSON válido, sin explicaciones adicionales.\n\nEl JSON debe respetar exactamente esta estructura:\n\n{\n  \"categoria\": \"orden_compra | reclamo | pagos\",\n  \"prioridad\": \"alta | media | baja\",\n  \"area_derivacion\": \"comercial | administracion | logistica\",\n  \"resumen\": \"resumen breve y profesional del caso\",\n  \"accion_sugerida\": \"acción concreta recomendada para el equipo\"\n}\n\nReglas:\n- Si el email habla de demoras, problemas de entrega o disconformidad → categoria = reclamo\n- Si el email habla de facturas, transferencias o estado de pagos → categoria = pagos\n- Si el email habla de producción, compra de mercadería o confirmación de artículos → categoria = orden_compra\n- Priorizá \"alta\" cuando el mensaje implique urgencia operativa o comercial\n- El resumen debe tener máximo 15 palabras\n- La accion_sugerida debe ser clara, breve y accionable",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        416,
+        0
+      ],
+      "id": "c7d1afa9-0941-464a-9649-e4d17afa3df6",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        352,
+        208
+      ],
+      "id": "6faee886-18fc-4d97-ba41-cb4981dd4675",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ea4dce7a-4f19-49a7-a77b-f5e815daffad",
+                    "leftValue": "={{ JSON.parse($json.text).categoria }}",
+                    "rightValue": "reclamo",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "3f3d917f-1c10-45ca-ae08-183ea1dbddc7",
+                    "leftValue": "={{ JSON.parse($json.text).categoria }}",
+                    "rightValue": "pagos",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "5603bde8-11d4-4324-9e2f-f02bbe05a6ec",
+                    "leftValue": "={{ JSON.parse($json.text).categoria }}",
+                    "rightValue": "reclamo",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        768,
+        0
+      ],
+      "id": "96fdb3b3-364a-406b-a79a-80a4d3b666f5",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "17U10RU-x0yhNvBs6YP0f08pepoC7xcwGL8KvTMApAkw",
+          "mode": "list",
+          "cachedResultName": "AI Email Classification",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17U10RU-x0yhNvBs6YP0f08pepoC7xcwGL8KvTMApAkw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17U10RU-x0yhNvBs6YP0f08pepoC7xcwGL8KvTMApAkw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "categoria": "={{ JSON.parse($json.text).categoria }}",
+            "prioridad": "={{ JSON.parse($json.text).prioridad }}",
+            "area_derivacion": "={{ JSON.parse($json.text).area_derivacion }}",
+            "resumen": "={{ JSON.parse($json.text).resumen }}",
+            "accion_sugerida": "={{ JSON.parse($json.text).accion_sugerida }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "categoria",
+              "displayName": "categoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "prioridad",
+              "displayName": "prioridad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "area_derivacion",
+              "displayName": "area_derivacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "resumen",
+              "displayName": "resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "accion_sugerida",
+              "displayName": "accion_sugerida",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1024,
+        -16
+      ],
+      "id": "8fb568c5-8d94-4f8a-a2dc-d04a9543da99",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pg4hZ7y1zMXxT1RO",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "89577922-a382-43c6-8781-ba1848df4fbc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb1a2dee5c2e9a5618195d153cda231c45bfa7836ec0c486d45a760ef410f4a"
+  },
+  "id": "1xhDeSgKKf5WlJbt",
+  "tags": []
+}
